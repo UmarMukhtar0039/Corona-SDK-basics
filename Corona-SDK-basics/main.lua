@@ -1,121 +1,70 @@
 
 local deltaTime = require("deltaTime")
+local fps = require ( "fps")
+-- local shakeEffect = require("shakeEffect")
+-- local slowMotionEffect = require("slowMotionEffect")
 
 local prevTime = 0
-local spawnedObjects = { } -- table of spwaned objects in game 	
+local spawnedObstacles = { } -- table of spwaned obstacles in game 	
 local spawnTimer = 0
 local spawnTimeLimit = 3 -- in seconds
-local height = display.contentHeight
-local width = display.contentWidth
-local acc = 50 -- acceleration of obstacles
+
+-- obstacle's properties
+local height, width, acc
 
 -- forward references
 local updatePlayer
+local updateBackground
 
 -- this is the player we will possess in future
-local player = { 	}
+local player = {}
 
--- function to initialize player vars
-local function initPlayer()
-			player.width = 150
-			player.height = 100
-			player.x = player.width/2
-			player.y = display.contentHeight - player.height/2
-			player.vx = 200
-			player.vy = 200
-			player.sprite = display.newRect(player.x, player.y, player.width, player.height)
-			player.dir = nil
-end
+--background image`
+local background1
+local background2
+local backgroundVY 
 
 
+-- Displays Groups
+local masterGroup = display.newGroup()
+local backgroundGroup = display.newGroup()
+local playerGroup = display.newGroup()
+local obstaclesGroup = display.newGroup()
+-- inserting sub display groups in master group
+masterGroup:insert(backgroundGroup)
+masterGroup:insert(obstaclesGroup)
+masterGroup:insert(playerGroup)
 
 
--- this table contains color, opacity, velocity, scale of obstacles
-local attributes = { 
-	{ --this is red block
-
-		r = 1,
-		g = 0,
-		b = 0,
-		op = .5,
-		vy = 700,
-		scale = 
-		{
-			xScale = 2,
-			yScale = 1.5 
-
-		}
-	}, 
-	
-	{ -- this is green block
-		r = 0,
-		g = 1,
-		b = 0,
-		op = .8,
-		vy = 320,
-		scale = 
-		{
-			xScale = 1.7,
-			yScale = 1
-
-		}
-	},
-	
-	{ -- this is blue block
-		r = 0,
-		g = 0,
-		b = 1,
-		op = .4,
-		vy = 400,
-		scale = 
-		{
-			xScale = 0.8,
-			yScale = 0.5 
-
-		}
-	},	
-	
-	{ -- this is pink block
-		r = 1,
-		g = 0,
-		b = 1,
-		op = .9,
-		vy = 500,
-		scale = 
-		{
-			xScale = 1,
-			yScale = 1.5 
-		}
-	}
-
-}
+-- initializing fps
+fps.init()
 
 
--- initialize player entity
-initPlayer()
-
--- random horizontal positions
-xPositions = { 200 ,370, 520, 620}
-local text
-local count = 0
+-----------------------
 function update(event)
 	
 	-- -- calculating delta time 
 	-- local currentTime = system.getTimer() / 1000
 	-- local deltaTime = currentTime - prevTime
 	-- prevTime = currentTime
-	text = display.newText(count, 500,500)
 
-	local dt = deltaTime.getDeltaTimeInSec()
 
-	-- -- this updates player's view and model
+	local dt = deltaTime.getDelta()
+
+	-- calculating average FPS
+	fps.update(dt)
+	-- shakeEffect.update(dt)
+	-------------------
+
+	-- this updates player's view and model
 	updatePlayer(dt)
-	--- this will spawn our player
+	-- updating background for scrolling functoinality
+	updateBackground(dt)
 
-		-- this block of code deals with spawning of objects 
+	-- this block of code deals with spawning of obstacles 
 	spawnTimer = spawnTimer + dt
 
-	-- object will be spawned after spawnTimeLimit
+	-- obstacle will be spawned after spawnTimeLimit
 	if spawnTimer > spawnTimeLimit then
 		-- selects a position on x axis, a random scale and color from table : xPositions, scale, color
 		local selector = math.random(#xPositions)
@@ -124,56 +73,43 @@ function update(event)
 
 		-- end 
 		
-		local object = display.newRect( xPositions[selector] , -5, 150, 100)	
-		object.vy = attributes[selector].vy -- this is vertical velocity of the obstacle defined in attributes table
-		-- setting random colors and scale from attributes table using a single selector
-		object:setFillColor(attributes[selector].r, attributes[selector].g, attributes[selector].b, attributes[selector].op)
+		local obstacle = display.newImage(obstaclesGroup,"Bg1rcaR.png", xPositions[selector],-5)	
+		obstacle.vy = obstacleVelocity[selector]-- this is vertical velocity of the obstacle defined in attributes table
 		
-		-- this superseeds the scale function if this is used then the scale function will set the scale w.r.t the scale set using this var
-		-- object.xScale = attributes[selector].scale.xScale
-		-- object.yScale = attributes[selector].scale.yScale
-		object:scale( attributes[selector].scale.xScale , attributes[selector].scale.yScale)
-		
-		spawnedObjects[#spawnedObjects+1] = object
+		-- adding reference of obstacle in the table
+		spawnedObstacles[#spawnedObstacles+1] = obstacle
 		
 		-- resetting the timer to 0 after spawning
 		spawnTimer = 0
 	end
 	
 	-----------------
-
-	-- this block of code will move the objects in the table
-	for i = 1, #spawnedObjects do
-		spawnedObjects[i].vy = spawnedObjects[i].vy + acc * dt
- 		spawnedObjects[i].y = spawnedObjects[i].y + spawnedObjects[i].vy * dt 
-		-- print ("main speed of object ".. i.. " : "..spawnedObjects[i].vy)		
+	-- this block of code will move the obstacles in the table
+	for i = 1, #spawnedObstacles do
+		spawnedObstacles[i].vy = (spawnedObstacles[i].vy + backgroundVY)*0.5 + backgroundVY
+		spawnedObstacles[i].vy = spawnedObstacles[i].vy + acc * dt
+ 		spawnedObstacles[i].y = spawnedObstacles[i].y + spawnedObstacles[i].vy * dt 
+		-- print ("main speed of obstacle ".. i.. " : "..spawnedObstacles[i].vy)		
 	end
 	
-	-----------------
+	-----------------`
 
-	-- removing objects from spawnedObjects table as it goes out of screen
-	for i =  #spawnedObjects, 1, -1 do  
+	-- removing obstacles from spawnedObstacles table as it goes out of screen``
+	for i =  #spawnedObstacles, 1, -1 do  
 	 	
 	 	-- if obj goes beyond screen remove it from table and delete it
-	 	if 	spawnedObjects[i].y - spawnedObjects[i].height > height then 
-			local temp = table.remove(spawnedObjects,i )
+	 	if 	spawnedObstacles[i].y - spawnedObstacles[i].height > height then 
+			local temp = table.remove(spawnedObstacles,i )
 			temp:removeSelf()
 			temp = nil
 		end
 	end
 	-----------
-	-- score
-	-- count = count + 1
-	-- if text ~= nil and count % 2 == 0 then
-	-- 	text:removeSelf()
-	-- 	text = nil
-	-- end
 end
 
 ------------------------
 
 -- this function will update the player's model and view
--- don't define this local again when it is already fwd ref. as local var
 function updatePlayer(dt)
 	  -- this is part of model
  	if player.dir == "r" then
@@ -183,85 +119,136 @@ function updatePlayer(dt)
 		player.x = player.x - player.vx * dt
 
 	elseif player.dir == "u" then
-		player.y = player.y - player.vy * dt
+		player.y = player.y - backgroundVY * dt
 		
 	elseif player.dir == "d" then
-		player.y = player.y + player.vy * dt
+		player.y = player.y + backgroundVY * dt
 	end
 
 
   	---- this is part the of view
 	player.sprite.x = player.x
   	player.sprite.y = player.y
-  	
+
+end
+
+-------------------------
+-- scrolling functionality
+function updateBackground(dt)
+	-- setting background's y axis according to velocity w.r.t frame time
+	background1.y = background1.y + backgroundVY * dt
+	background2.y = background2.y + backgroundVY * dt
+	--if background1 or background2 has gone down of screen reset it back to above the screen
+	if (background1.y >= ( height + height*0.5)) then
+		background1.y = (10 + -height*0.5)
+	end
+	if (background2.y >= (height + height * 0.5) ) then
+		background2.y = (10 + -height*0.5)
+	end
+
 end
 
 
 ------------------------
-local tempText = nil
 
 -- setting w,a,s,d keys for moving up,left,down,right
 local function onKeyEvent( event )
-
-	if event.phase == "down" then
+	
+	-- print (event.keyName) 
+    if event.phase == "down" then
     	if event.keyName == "d" then 
     		player.dir = "r"
 	 	
 		elseif event.keyName == "a" then
 	    	player.dir = "l"
-		
-		elseif event.keyName == "w" then
-			player.dir = "u"
-		
-		elseif event.keyName == "s" then
-			player.dir = "d"
-		
+	    	-- slowMotionEffect.play(1000)
 		else
 			player.dir = nil
 		end
-		-- display keyname on screen
-		tempText = display.newText(event.keyName,display.contentCenterX, display.contentCenterY)
 	end
 
 	if event.phase == "up" then
 		player.dir = nil
-		if tempText ~= nil then			
-			tempText:removeSelf()
-			tempText = nil
-		end
     end
-	
+
     return false
 end
+ 
+ -- function to reset Animation
+ local function spriteListener( event )
+ 	
+ 	thisSprite = event.target
+ 	if (event.phase == "ended") then
+		-- print("main: spriteListener called", backgroundVY)
+ 		thisSprite:setFrame(1)
+ 		thisSprite:play()
+ 	end
+ end
 
 
 
 
--- local rect = display.newText("hello",200,200)
+-----------------------
+local function init()
+	-- initialize player entity
+	initPlayer()
+	-- Animation sequence of player sprite:
+	height = display.contentHeight
+	width = display.contentWidth
+	acc = 50 -- acceleration of obstacles
+	xPositions = { 200 ,370, 520, 620} 	-- random horizontal positions
+	obstacleVelocity = { 200, 150, 130, 170} -- different obstacle's velocity in y direction 
 
--- local function onkey( event )
--- 	if event.phase == "down" then
--- 		rect:removeSelf()
--- 		rect = nil
--- 	end	
+	-- initializing background
+    backgroundVY = 200
+	background1 = display.newImage(backgroundGroup, "Bg1-road.png", display.contentCenterX, display.contentCenterY )
+	background2 = display.newImage(backgroundGroup, "Bg1-road.png", display.contentCenterX, -1334*0.5)
+
+end
+-------------------------------
+
+-- function to initialize player vars
+function initPlayer()
+
+	player.width = 150
+	player.height = 100
+	player.x = display.contentWidth * 0.5 
+	player.y = display.contentHeight - player.height* 0.5 - 70
+	player.vx = 200
+	-- sheet for player sprite
+	local playerSheet = graphics.newImageSheet("t_1.png", {width = 44, height = 139, numFrames = 8, sheetContentWidth = 484, sheetContentHeight = 139} )
+	-- sequence for player sprite
+	local sequence = {
 	
--- end
+		{ -- Normal Run	
+			name = "run",
+			start = 1,
+			count = 10,
+			time = 800,
+			loopCount = 1,
+			loopDirection = "forward"
+		},
 
--- Runtime:addEventListener("key", onkey)
+		{ -- Hunting
+			name = "hunt",
+			frames = { 11},
+			time = 1000
+		}
+
+	}
+	player.sprite = display.newSprite(playerGroup, playerSheet, sequence)
+	player.sprite.x = player.x 
+	player.sprite.y = player.y
+	player.sprite:play()
+	player.dir = nil
+end
+-------------------------------
 
 
--- local function onKeyEvent( event )
--- 	if event.phase == "down" then
--- 		tempText = display.newText(event.keyName,200,200)
--- 	end
+init()
 
--- 	if event.phase == "up" then
--- 		tempText:removeSelf()
--- 		tempText = nil
--- 	end
--- end
-
+player.sprite:addEventListener("sprite", spriteListener)
 -- Add the key event listener
 Runtime:addEventListener( "key", onKeyEvent )
-
 Runtime:addEventListener("enterFrame", update)
+
