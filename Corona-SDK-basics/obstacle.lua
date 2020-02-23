@@ -1,0 +1,80 @@
+local obstacle = {
+    displayGroup = nil,
+    shadowGroup = nil,
+}
+local typesMap = require("obstacleTypesMap")
+
+local obstacle_mt = {__index = obstacle}
+
+---------------------------
+-- creates a new instance
+function obstacle.new(type, x, y)
+    local newObstacle = {
+        type = type,
+        x = x,
+        y = y,
+        vx = 0,
+        vy = 100,
+        height = nil,
+        width = nil,
+        sprite = nil,
+        outOfBound = false,
+        -- contentBound = {xMin = nil, yMin = nil, xMax = nil, yMax = nil, width = nil, height = nil}
+        contentBound = { x = nil, y = nil, radius = nil}
+    }
+
+    newObstacle = typesMap.makeObstacle(newObstacle, obstacle.displayGroup)
+
+    -- Optional -- For Debug Only
+    -- newObstacle.debugSprite = display.newRect( obstacle.shadowGroup, newObstacle.x, newObstacle.y, newObstacle.contentBound.xMax - newObstacle.contentBound.xMin, newObstacle.contentBound.yMax - newObstacle.contentBound.yMin ) 
+    -- newObstacle.debugSprite = display.newCircle( obstacle.shadowGroup, newObstacle.x, newObstacle.y, newObstacle.contentBound.radius)
+
+    return setmetatable(newObstacle, obstacle_mt)
+end
+
+---------------------------
+
+function obstacle:updateBound( )
+    
+    -- self.contentBound.xMin = self.x - self.contentBound.width * 0.5
+    -- self.contentBound.xMax = self.x + self.contentBound.width * 0.5
+    -- self.contentBound.yMin = self.y - self.contentBound.height * 0.5
+    -- self.contentBound.yMax = self.y + self.contentBound.height * 0.5
+    self.contentBound.x = self.x
+    self.contentBound.y = self.y 
+end
+
+-- when we bind a certain function to a particular table then it should not be local
+function obstacle.updateImage(self)
+    self.sprite.x = self.x
+    self.sprite.y = self.y
+    -- updating debugSprite with player's sprite
+    if (self.debugSprite ~= nil) then
+        self.debugSprite.x = self.contentBound.x
+        self.debugSprite.y = self.contentBound.y
+    end
+end
+
+---------------------------
+
+-- updating model and view of obstacle, called every frame from an external script
+function obstacle.update(self, playerVY, dt)
+    self.y = self.y - (-self.vy - playerVY) * dt
+
+    -- going beyond screen, remove it
+    if self.y > display.contentHeight + self.width * 0.5 then
+        self.outOfBound = true
+    end
+    self:updateBound()   
+    self.updateImage(self)  
+end
+
+---------------------------
+-- destorying all sprites of obstacle
+function obstacle:destroyImages( )
+    self.sprite:removeSelf()
+    self.sprite = nil
+end
+
+
+return obstacle
