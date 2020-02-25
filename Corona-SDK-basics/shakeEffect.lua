@@ -2,7 +2,7 @@ shakeEffect={
 	displayGroup=nil,
 }
 local debugStmt=require "scripts.helperScripts.printDebugStmt"
-local shakeTimer,shakeTimeLimit,shakeSpeed,triggerReposition,movePattern,moveCycler
+local shakeTimer,shakeTimeLimit,shakeSpeed,triggerReposition,movePattern,movecyclerr
 local myMath=
 			{
 				random=math.random
@@ -41,12 +41,12 @@ function shakeEffect.update(delta)
     local motion
     local delX,delY
     --select one of the 
-    delX=movePattern[moveCycler].x*shakeSpeed
-    delY=movePattern[moveCycler].y*shakeSpeed
-    --increment cycler and reset if it exceeds the size of pattern table
-    moveCycler=moveCycler+1
-    if(moveCycler>#movePattern)then
-      moveCycler=1
+    delX=movePattern[movecyclerr].x*shakeSpeed
+    delY=movePattern[movecyclerr].y*shakeSpeed
+    --increment cyclerr and reset if it exceeds the size of pattern table
+    movecyclerr=movecyclerr+1
+    if(movecyclerr>#movePattern)then
+      movecyclerr=1
     end
 
     --once the direction is set apply the movement to the display group in that direction

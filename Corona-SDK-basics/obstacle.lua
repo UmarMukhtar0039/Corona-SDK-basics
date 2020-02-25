@@ -14,13 +14,13 @@ function obstacle.new(type, x, y)
         x = x,
         y = y,
         vx = 0,
-        vy = 100,
+        vy = 50,
         height = nil,
         width = nil,
         sprite = nil,
         outOfBound = false,
-        -- contentBound = {xMin = nil, yMin = nil, xMax = nil, yMax = nil, width = nil, height = nil}
-        contentBound = { x = nil, y = nil, radius = nil}
+        contentBound = {xMin = nil, yMin = nil, xMax = nil, yMax = nil, width = nil, height = nil}
+        -- contentBound = { x = nil, y = nil, radius = nil}
     }
 
     newObstacle = typesMap.makeObstacle(newObstacle, obstacle.displayGroup)
@@ -35,13 +35,12 @@ end
 ---------------------------
 
 function obstacle:updateBound( )
-    
-    -- self.contentBound.xMin = self.x - self.contentBound.width * 0.5
-    -- self.contentBound.xMax = self.x + self.contentBound.width * 0.5
-    -- self.contentBound.yMin = self.y - self.contentBound.height * 0.5
-    -- self.contentBound.yMax = self.y + self.contentBound.height * 0.5
-    self.contentBound.x = self.x
-    self.contentBound.y = self.y 
+    self.contentBound.xMin = self.x - self.contentBound.width * 0.5
+    self.contentBound.xMax = self.x + self.contentBound.width * 0.5
+    self.contentBound.yMin = self.y - self.contentBound.height * 0.5
+    self.contentBound.yMax = self.y + self.contentBound.height * 0.5
+    -- self.contentBound.x = self.x
+    -- self.contentBound.y = self.y 
 end
 
 -- when we bind a certain function to a particular table then it should not be local
@@ -50,9 +49,9 @@ function obstacle.updateImage(self)
     self.sprite.y = self.y
     -- updating debugSprite with player's sprite
     if (self.debugSprite ~= nil) then
-        self.debugSprite.x = self.contentBound.x
-        self.debugSprite.y = self.contentBound.y
-    end
+		self.debugSprite.x = self.contentBound.xMin + self.contentBound.width * 0.5
+		self.debugSprite.y = self.contentBound.yMin + self.contentBound.height * 0.5
+	end
 end
 
 ---------------------------

@@ -1,10 +1,11 @@
 local gameWorld = {}
 local deltaTime = require("deltaTime")
 local playerMaker = require("player")
-local obstacleMaker = require("obstacle")
 local collisionHandler = require("collisionHandler")
 local animationService = require("animationService")
 local inGameUI = require("inGameUI")
+local toast = require("toast")
+local environmentManager = require("environmentManager")
 
 -- display groups
 local masterGroup
@@ -31,7 +32,7 @@ local width = display.contentWidth
 -- x position for obstacle 
 local xPositionsObstacle
 
-
+local tab = { "one", "two ", "three"}
 -- udpateFunction's fwd references
 local updatePlayer
 local updateBackground
@@ -45,18 +46,17 @@ local function update( )
 	local dt = deltaTime.getDelta()
 
 	-- pause all the animations
-	if gameWorld.gameState == "suspended" then
+	if gameWorld.gameState == "suspended" or gameWorld.gameState == "gameOver" then
 		animationService.pause()
-		inGameUI.makePauseMenu() -- shouldn't use it here
 		return
 	end	
 
 	if gameWorld.gameState == "ready" then
 		animationService.pause()
 		return	
-	end	
+	end
+	
 	-- if gameState is running
-
 	animationService.resume() -- resumes the animations of all objects
 	
 	updatePlayer(dt)	
@@ -73,17 +73,13 @@ function updatePlayer(dt)
 	local color = { r = 1, g = 1, b = 1}
 	-- checking if player collides with obstacles or not
 	for i=1,#obstacles do
-		if collisionHandler.circleRectangleCollision(obstacles[i], player) then
+		if collisionHandler.rectangleRectangleCollision( player, obstacles[i] ) then
 			-- if collision occurs player's debug sprite will turn red
 			color = { r = 1, g = 0, b = 0}
 			gameWorld.gameState = "gameOver"
 			animationService.pause()
-			display.newRect(obstaclesGroup, display.contentCenterX, display.contentCenterY, width, height)
-			readyText = display.newText(obstaclesGroup,"Game Over", display.contentCenterX, display.contentCenterY)
-			readyText:setFillColor(0,0,0)
 			return
 			-- end the game
-
 		end
 	end
 	if player.debugSprite ~= nil then
@@ -111,27 +107,7 @@ end
 
 -- function to handle obstacle's updation
 function updateObstacles( dt )
-	timer = timer + dt
-	if timer >= timerLimit then
-		local selector = math.random( #xPositionsObstacle )
-		obstacles[#obstacles+1] = obstacleMaker.new("car",xPositionsObstacle[selector],100)
-		timer = 0
-	end
-
-	-- updating obstacles
-	for i=1,#obstacles do
-		obstacles[i]:update(player.vy, dt)
-	end
-
-
-	-- removing obstacles
-	for i=#obstacles,1,-1 do
-		if obstacles[i].outOfBound == true then
-			obstacles[i]:destroyImages()
-			local temp = table.remove(obstacles, i)
-			temp = nil
-		end
-	end
+	environmentManager.manageObstacles(dt, obstacles, player.vy)
 end
 
 -------------------------
@@ -143,8 +119,9 @@ local function onKeyEvent( event )
 		elseif(event.keyName == "a") then -- when 'a' key is pressed, set player's direction to left
 			player.dir = "l"
 		end
-		if (event.keyName == "q") then
+		if (event.keyName == "q" and gameWorld.gameState ~= "gameOver") then
 			gameWorld.gameState = "suspended"	
+			inGameUI.makePauseMenu(inGameUIGroup) -- shouldn't use it here
 		end
 	end
 	if (event.phase == "up") then
@@ -179,9 +156,13 @@ local function init()
 	masterGroup:insert(obstaclesGroup)
 	masterGroup:insert(inGameUIGroup)
 	gameWorld.gameState = "ready" -- initially the game state will by ready
+	toast.displayGroup = inGameUIGroup
+	toast.showToast("umar")
+	toast.showToast(" Mukhtar")
+	toast.showToast(" dddd")
+	toast.showToast(" aaa")
 
 	readyText = display.newText(obstaclesGroup, "Tap To play", display.contentCenterX, display.contentCenterY)
-
 	-- assinging player group to the table player at key displayGroup
 	playerMaker.displayGroup = playerGroup
 	playerMaker.shadowGroup = shadowGroup
@@ -191,15 +172,12 @@ local function init()
 	background1 = display.newImage(backgroundGroup, "backgroundRoad.png", display.contentCenterX, display.contentCenterY )
 	background2 = display.newImage(backgroundGroup, "backgroundRoad.png", display.contentCenterX, -1334*0.5)
 	
-	-- setting up obstacles
-	timer = 0
-	timerLimit = 3
-	xPositionsObstacle = { 100, 300, 500 , 600}
 	obstacles = {}
-	obstacleMaker.displayGroup = obstaclesGroup
-	obstacleMaker.shadowGroup = shadowGroup
-	inGameUI.displayGroup = inGameUIGroup
-	inGameUI.init( gameWorld)
+	
+	-- inGameUI.displayGroup = inGameUIGroup
+	inGameUI.init(gameWorld)
+
+	environmentManager.init(obstaclesGroup, shadowGroup, player.vy)
 end
 
 init()

@@ -29,7 +29,7 @@ function player.new( type,x,y )
 	newPlayer = typesMap.makePlayer(newPlayer, player.displayGroup, player.shadowGroup)
 
 	-- Optional -- For Debug Only
-	-- newPlayer.debugSprite = display.newRect(player.shadowGroup, newPlayer.x, newPlayer.y, newPlayer.contentBound.xMax - newPlayer.contentBound.xMin, newPlayer.contentBound.yMax - newPlayer.contentBound.yMin ) 
+	newPlayer.debugSprite = display.newRect(player.shadowGroup, newPlayer.x, newPlayer.y, newPlayer.contentBound.xMax - newPlayer.contentBound.xMin, newPlayer.contentBound.yMax - newPlayer.contentBound.yMin ) 
 	-- newPlayer.debugSprite = display.newCircle(player.shadowGroup, newPlayer.x, newPlayer.y, newPlayer.contentBound.radius)
 	
 	return setmetatable(newPlayer, player_mt)
@@ -39,8 +39,8 @@ end
 function player:updateBounds( )
 	self.contentBound.xMin = self.x - self.contentBound.width * 0.5
 	self.contentBound.xMax = self.x + self.contentBound.width * 0.5
-	self.contentBound.yMin = self.y - self.contentBound.height * 0.5
-	self.contentBound.yMax = self.y + self.contentBound.height * 0.5
+	self.contentBound.yMin = self.y - self.contentBound.height * 0.5 + self.contentBound.yOffset
+	self.contentBound.yMax = self.y + self.contentBound.height * 0.5 + self.contentBound.yOffset
 	-- self.contentBound.x = self.x -- in case of circular sprite
 	-- self.contentBound.y = self.y 
 end

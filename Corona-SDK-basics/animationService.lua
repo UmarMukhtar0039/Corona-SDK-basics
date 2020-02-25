@@ -11,6 +11,7 @@ function animationService.newSprite(group, sheet, sequence)
 		if(animations[i].frame==nil)then
 			-- debugStmt.print("Animations Service: obj frame at "..i.." is nil. Will remove from records")
 			obj=table.remove( animations,i )
+			-- obj:removeSelf() ??
 			obj=nil
 		end
 	end
