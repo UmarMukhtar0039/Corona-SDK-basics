@@ -25,7 +25,7 @@ function inGameUI.makePauseMenu( displayGroup )
 	pauseMenuDG[#pauseMenuDG + 1] = display.newText(displayGroup, "Tap to Resume", menuBox.x, menuBox.y - 50)
 	-- pauseMenuDG[#pauseMenuDG+1] = menuText
 	
-	resumeButton = display.newImage(displayGroup,"resumeButton.png" , menuBox.x, menuBox.y + 80)
+	resumeButton = display.newImage(displayGroup,"images.png" , menuBox.x, menuBox.y + 80)
 	pauseMenuDG[#pauseMenuDG + 1] = resumeButton
 
 	-- nested function to change gameState and remove display items
